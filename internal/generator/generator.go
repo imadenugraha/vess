@@ -8,15 +8,17 @@ import (
 type Generator struct {
 	osType     string
 	phpVersion string
+	imageType  string
 	engine     *TemplateEngine
 }
 
 // New creates a new Dockerfile generator
-func New(osType, phpVersion string) *Generator {
+func New(osType, phpVersion, imageType string) *Generator {
 	engine, _ := NewTemplateEngine()
 	return &Generator{
 		osType:     osType,
 		phpVersion: phpVersion,
+		imageType:  imageType,
 		engine:     engine,
 	}
 }
@@ -24,7 +26,7 @@ func New(osType, phpVersion string) *Generator {
 // Generate generates a Dockerfile from extensions
 func (g *Generator) Generate(extNames []string) (string, error) {
 	// Prepare template data
-	data, err := PrepareTemplateData(g.osType, g.phpVersion, extNames)
+	data, err := PrepareTemplateData(g.osType, g.phpVersion, g.imageType, extNames)
 	if err != nil {
 		return "", fmt.Errorf("failed to prepare template data: %w", err)
 	}
