@@ -18,7 +18,7 @@
 ### From Source
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/imadenugraha/vess.git
 cd vess
 go build -o vess
 sudo mv vess /usr/local/bin/
