@@ -16,7 +16,7 @@ func NewValidator() *Validator {
 }
 
 // Validate validates the configuration
-func (v *Validator) Validate(cfg *extensions.Config, osType, phpVersion string) error {
+func (v *Validator) Validate(cfg *extensions.Config, osType, phpVersion, imageType string) error {
 	if len(cfg.Extensions) == 0 {
 		return fmt.Errorf("no extensions specified")
 	}
@@ -31,6 +31,18 @@ func (v *Validator) Validate(cfg *extensions.Config, osType, phpVersion string) 
 	if !contains(validVersions, phpVersion) {
 		return fmt.Errorf("unsupported PHP version: %s (must be one of: %s)", 
 			phpVersion, strings.Join(validVersions, ", "))
+	}
+
+	// Validate image type
+	validTypes := []string{"cli", "fpm", "apache"}
+	if !contains(validTypes, imageType) {
+		return fmt.Errorf("unsupported image type: %s (must be one of: %s)", 
+			imageType, strings.Join(validTypes, ", "))
+	}
+
+	// Validate OS + image type compatibility
+	if osType == "alpine" && imageType == "apache" {
+		return fmt.Errorf("apache image type is not available for Alpine Linux (Docker Hub does not provide php:*-apache-alpine images). Please use --os ubuntu instead")
 	}
 
 	// Validate each extension
