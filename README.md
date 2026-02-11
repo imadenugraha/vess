@@ -74,7 +74,7 @@ Generate Dockerfile, build image, and verify:
 
 ```bash
 # Generate Dockerfile
-vess generate -o alpine -p 8.3 -e examples/basic.env -f Dockerfile
+vess generate -o alpine -p 8.3 -t fpm -e examples/basic.env -f Dockerfile
 
 # Build image
 vess build -d Dockerfile -t my-app:latest
@@ -133,30 +133,95 @@ See [examples/](examples/) for more configuration samples.
 - PHP 8.2
 - PHP 8.3
 
+## Base Image Types
+
+vess supports three PHP base image types:
+
+### CLI (Command Line Interface)
+
+- **Use for**: Queue workers, cron jobs, scheduled tasks, Laravel Artisan commands
+- **Characteristics**: No web server, runs PHP scripts from command line
+- **Container behavior**: Starts interactive PHP shell by default
+- **Example**: `vess generate -o alpine -p 8.3 -t cli -e examples/cli-worker.env`
+
+### FPM (FastCGI Process Manager)
+
+- **Use for**: Production web applications with Nginx, microservices, modern PHP apps
+- **Characteristics**: PHP-FPM daemon listening on port 9000
+- **Container behavior**: Requires separate web server (Nginx/Apache) as reverse proxy
+- **Example**: `vess generate -o alpine -p 8.3 -t fpm -e examples/basic.env`
+- **Default**: FPM is the default image type
+
+### Apache
+
+- **Use for**: Traditional all-in-one deployments, simple hosting, legacy applications
+- **Characteristics**: Apache web server with mod_php built-in, listens on port 80
+- **Container behavior**: Self-contained web server, no external proxy needed
+- **Example**: `vess generate -o ubuntu -p 8.3 -t apache -e examples/apache-simple.env`
+- **⚠️ Limitation**: Only available with Ubuntu/Debian (not Alpine)
+
 ## Supported Operating Systems
 
 - **Alpine Linux** - Lightweight, optimal for production (`--os alpine`)
-- **Ubuntu** - Full-featured, better for development (`--os ubuntu`)
+  - Supports: CLI, FPM
+  - ⚠️ Does not support: Apache
+- **Ubuntu/Debian** - Full-featured, better for development (`--os ubuntu`)
+  - Supports: CLI, FPM, Apache
+
+### Compatibility Matrix
+
+| Image Type | Alpine | Ubuntu/Debian |
+| ---------- | ------ | ------------- |
+| CLI | ✅ Yes | ✅ Yes |
+| FPM | ✅ Yes | ✅ Yes |
+| Apache | ❌ No | ✅ Yes |
 
 ## Examples
 
-### Basic Web Application
+### Basic Web Application (FPM)
 
 ```bash
 # Create env file
 echo "PHP_EXTENSIONS=mysqli,pdo_mysql,opcache,zip" > app.env
 
-# Generate and build
-vess generate -o alpine -p 8.3 -e app.env -f Dockerfile
+# Generate FPM image for use with Nginx
+vess generate -o alpine -p 8.3 -t fpm -e app.env -f Dockerfile
 vess build -d Dockerfile -t my-web-app:latest
 ```
 
-### Laravel Application
+### Apache All-in-One Application
 
 ```bash
-# Use the Laravel preset
-vess generate -o alpine -p 8.3 -e examples/laravel.env -f Dockerfile.laravel
-vess build -d Dockerfile.laravel -t laravel-app:8.3
+# Generate Apache image (Ubuntu only)
+vess generate -o ubuntu -p 8.3 -t apache -e examples/apache-simple.env -f Dockerfile.apache
+vess build -d Dockerfile.apache -t my-apache-app:latest
+
+# Run and test
+docker run -d -p 8080:80 my-apache-app:latest
+curl http://localhost:8080
+```
+
+### CLI Worker for Queue Processing
+
+```bash
+# Generate CLI image for Laravel queue worker
+vess generate -o alpine -p 8.3 -t cli -e examples/cli-worker.env -f Dockerfile.worker
+vess build -d Dockerfile.worker -t my-worker:latest
+
+# Run worker
+docker run -d my-worker:latest php artisan queue:work
+```
+
+### Laravel Application (Multiple Containers)
+
+```bash
+# FPM container for web requests
+vess generate -o alpine -p 8.3 -t fpm -e examples/laravel.env -f Dockerfile.web
+vess build -d Dockerfile.web -t laravel-web:8.3
+
+# CLI container for queue workers
+vess generate -o alpine -p 8.3 -t cli -e examples/cli-worker.env -f Dockerfile.worker  
+vess build -d Dockerfile.worker -t laravel-worker:8.3
 ```
 
 ### Development Environment with Xdebug
@@ -186,6 +251,7 @@ Generates a Dockerfile from an env file.
 
 - `--env-file, -e` - Path to env file (required)
 - `--output, -f` - Output Dockerfile path (default: `Dockerfile`)
+- `--type, -t` - PHP base image type: `cli`, `fpm`, `apache` (default: `fpm`)
 
 ### `vess build`
 
