@@ -21,7 +21,7 @@ var rootCmd = &cobra.Command{
 builds Docker images, and exports PHP extension metadata to JSON.
 
 Supports PHP 7.4+ with Alpine and Ubuntu base images.`,
-	Version: "1.0.0",
+	Version: "1.1.0",
 }
 
 func Execute() error {
