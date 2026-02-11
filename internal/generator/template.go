@@ -48,6 +48,7 @@ func (te *TemplateEngine) Render(templateName string, data interface{}) (string,
 type TemplateData struct {
 	PHPVersion     string
 	OSType         string
+	ImageType      string
 	BaseImage      string
 	BuildDeps      []string
 	RuntimeDeps    []string
@@ -64,20 +65,21 @@ type ExtensionData struct {
 }
 
 // PrepareTemplateData prepares data for template rendering
-func PrepareTemplateData(osType, phpVersion string, extNames []string) (*TemplateData, error) {
+func PrepareTemplateData(osType, phpVersion, imageType string, extNames []string) (*TemplateData, error) {
 	data := &TemplateData{
 		PHPVersion: phpVersion,
 		OSType:     osType,
+		ImageType:  imageType,
 		Extensions: make([]*ExtensionData, 0, len(extNames)),
 	}
 
 	// Set base image
 	if osType == "alpine" {
-		data.BaseImage = fmt.Sprintf("php:%s-fpm-alpine", phpVersion)
+		data.BaseImage = fmt.Sprintf("php:%s-%s-alpine", phpVersion, imageType)
 		data.BuildDeps = extensions.GetAlpineBuildDeps(extNames)
 		data.RuntimeDeps = extensions.GetAlpineRuntimeDeps(extNames)
 	} else if osType == "ubuntu" {
-		data.BaseImage = fmt.Sprintf("php:%s-fpm", phpVersion)
+		data.BaseImage = fmt.Sprintf("php:%s-%s", phpVersion, imageType)
 		data.BuildDeps = extensions.GetUbuntuBuildDeps(extNames)
 		data.RuntimeDeps = extensions.GetUbuntuRuntimeDeps(extNames)
 	}
