@@ -39,7 +39,17 @@ COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 # Set working directory
 WORKDIR /var/www/html
 
+{{- if eq .ImageType "fpm"}}
 # Expose PHP-FPM port
 EXPOSE 9000
 
 CMD ["php-fpm"]
+{{- else if eq .ImageType "apache"}}
+# Expose Apache port
+EXPOSE 80
+
+CMD ["apache2-foreground"]
+{{- else if eq .ImageType "cli"}}
+# CLI mode - interactive shell
+CMD ["php", "-a"]
+{{- end}}
