@@ -6,6 +6,11 @@ FROM {{.BaseImage}} AS builder
 # Install build dependencies
 {{- if .HasBuildDeps}}
 RUN apk add --no-cache --virtual .build-deps \
+    autoconf \
+    gcc \
+    linux-headers \
+    make \
+    build-base
 {{- range $index, $dep := .BuildDeps}}
     {{$dep}}{{if ne $index (len $.BuildDeps | minus1)}} \{{end}}
 {{- end}}
