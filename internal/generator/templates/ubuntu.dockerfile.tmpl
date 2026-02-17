@@ -9,6 +9,11 @@ RUN apt-get update
 # Install build dependencies
 {{- if .HasBuildDeps}}
 RUN apt-get install -y --no-install-recommends \
+    autoconf \
+    gcc \
+    linux-headers \
+    make \
+    build-essentials \
 {{- range $index, $dep := .BuildDeps}}
     {{$dep}}{{if ne $index (len $.BuildDeps | minus1)}} \{{end}}
 {{- end}}
